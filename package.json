@@ -1,0 +1,17 @@
+{
+  "name": "dubenko.dev",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/sniok/dubenko.dev.git",
+  "author": "Oleksandr Dubenko <dubenko.oleksandr@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "parcel-bundler": "^1.12.3",
+    "typeface-montserrat": "^0.0.54",
+    "typeface-open-sans": "^0.0.54"
+  },
+  "scripts": {
+    "start": "parcel --out-dir docs/ src/index.html",
+    "build": "parcel build --out-dir docs/ src/index.html"
+  }
+}
