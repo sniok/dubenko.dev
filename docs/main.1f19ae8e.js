@@ -117,7 +117,20 @@ parcelRequire = (function (modules, cache, entry, globalName) {
   }
 
   return newRequire;
-})({"webgl.js":[function(require,module,exports) {
+})({"redWaves.glsl":[function(require,module,exports) {
+module.exports = "precision highp float;\n#define GLSLIFY 1\n\nuniform float uTime;\n\nvoid main() {\n  float x = gl_FragCoord.x;\n  float y = gl_FragCoord.y;\n  float nx = x / 512.0 + 0.5;\n  float ny = y / 512.0 + 0.5;\n\n  // float time = uTime;\n  float st = uTime/40.0;\n\n//\n  float c = sin( ((ny*ny-sin(st*0.1))*(nx/ny-0.3*cos(st*0.05))*2.95 +st*0.2)*80.0 );\n\n  gl_FragColor = vec4(c*0.5, 0.0 , c*(1.0+sin(st))*0.2, 1.0);\n}\n";
+},{}],"waves.glsl":[function(require,module,exports) {
+module.exports = "precision highp float;\n#define GLSLIFY 1\n\nuniform float uTime;\n\nvoid main() {\n  float x = gl_FragCoord.x;\n  float y = gl_FragCoord.y;\n  float time = uTime;\n  float tek = mod((y/2.0+sin((x)/6.0)) + cos(y/20.0)*3.0 + cos(x/20.0 + time/20.0)*1.4 - time/2.0, 35.0) / 15.0;\n  gl_FragColor = vec4(tek*0.4, 0.1, 2.0 - tek*0.5, 1.0);\n}\n";
+},{}],"webgl.js":[function(require,module,exports) {
+"use strict";
+
+var _redWaves = _interopRequireDefault(require("./redWaves.glsl"));
+
+var _waves = _interopRequireDefault(require("./waves.glsl"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var shaders = [_redWaves.default, _waves.default];
 var vertices = new Float32Array([-1, -1, 1, 1, -1, 1, -1, -1, 1, -1, 1, 1]);
 var scene = {
   width: 512,
@@ -131,7 +144,7 @@ gl.viewport(0, 0, canvas.width, canvas.height);
 gl.clearColor(0, 0, 0, 1);
 gl.clear(gl.COLOR_BUFFER_BIT);
 var vertex = "\nattribute vec2 aVertexPosition;\n\nvoid main() {\ngl_Position = vec4(aVertexPosition, 0.0, 1.0);\n}\n";
-var fragment = "\n\nprecision highp float;\n\nuniform float uTime;\n\nvoid main() {\n  float x = gl_FragCoord.x;\n  float y = gl_FragCoord.y;\n  float time = uTime;\n  float tek = mod((y/2.0+sin((x)/6.0)) + cos(y/20.0)*3.0 + cos(x/20.0 + time/20.0)*1.4 - time/2.0, 35.0) / 15.0;\n  gl_FragColor = vec4(tek*0.4, 0.1, 2.0 - tek*0.5, 1.0);\n}\n";
+var fragment = shaders[Math.floor(Math.random() * shaders.length)];
 var vs = gl.createShader(gl.VERTEX_SHADER);
 gl.shaderSource(vs, vertex);
 gl.compileShader(vs);
@@ -166,7 +179,7 @@ var loop = function loop() {
 };
 
 loop();
-},{}],"../node_modules/parcel-bundler/src/builtins/bundle-url.js":[function(require,module,exports) {
+},{"./redWaves.glsl":"redWaves.glsl","./waves.glsl":"waves.glsl"}],"../node_modules/parcel-bundler/src/builtins/bundle-url.js":[function(require,module,exports) {
 var bundleURL = null;
 
 function getBundleURLCached() {
@@ -272,7 +285,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "58642" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "53145" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
