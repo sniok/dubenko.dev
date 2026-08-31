@@ -1,12 +1,14 @@
 import redWaves from "./redWaves.glsl";
 import waves from "./waves.glsl";
 import funky from "./funky.glsl";
+import bluewaves from "./bluewaves.glsl";
 
 // List of all the fragment shaders
-const shaders = [funky, redWaves, waves];
+const shaders = [funky, redWaves, waves, bluewaves];
 
 // Pick a random shader
 let shaderIndex = Math.floor(Math.random() * shaders.length);
+shaderIndex = 3;
 
 // Just a fullscreen square
 const vertices = new Float32Array([-1, -1, 1, 1, -1, 1, -1, -1, 1, -1, 1, 1]);
@@ -58,15 +60,18 @@ function createProgram(fragmentShader) {
   gl.useProgram(program);
 
   // Show errors if any
-  if (!gl.getShaderParameter(vs, gl.COMPILE_STATUS)) console.log(gl.getShaderInfoLog(vs));
-  if (!gl.getShaderParameter(fs, gl.COMPILE_STATUS)) console.log(gl.getShaderInfoLog(fs));
-  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) console.log(gl.getProgramInfoLog(program));
+  if (!gl.getShaderParameter(vs, gl.COMPILE_STATUS))
+    console.log(gl.getShaderInfoLog(vs));
+  if (!gl.getShaderParameter(fs, gl.COMPILE_STATUS))
+    console.log(gl.getShaderInfoLog(fs));
+  if (!gl.getProgramParameter(program, gl.LINK_STATUS))
+    console.log(gl.getProgramInfoLog(program));
 
   // Init time uniform
   program.uTime = gl.getUniformLocation(program, "uTime");
   gl.uniform1f(program.uTime, 1.0);
 
-  // size uniform 
+  // size uniform
   program.uSize = gl.getUniformLocation(program, "uSize");
   gl.uniform1f(program.uSize, canvasSize);
 
@@ -75,21 +80,19 @@ function createProgram(fragmentShader) {
   gl.enableVertexAttribArray(program.aVertexPosition);
   gl.vertexAttribPointer(program.aVertexPosition, 2, gl.FLOAT, false, 0, 0);
 
-  return program
+  return program;
 }
 
-let program = createProgram(shaders[shaderIndex])
+let program = createProgram(shaders[shaderIndex]);
 
-let time = 0;
-const loop = () => {
-  time++;
-  gl.uniform1f(program.uTime, time);
+const loop = (timestamp) => {
+  gl.uniform1f(program.uTime, timestamp / 80);
   gl.drawArrays(gl.TRIANGLES, 0, 6);
-  setTimeout(loop, 50);
+  requestAnimationFrame(loop);
 };
 loop();
 
 canvas.onclick = () => {
   shaderIndex = (shaderIndex + 1) % shaders.length;
-  program = createProgram(shaders[shaderIndex])
-}
+  program = createProgram(shaders[shaderIndex]);
+};

@@ -7,15 +7,6 @@ body {
   margin: 0;
 }
 
-/* h1,
-h2,
-h3,
-h4,
-h5 {
-  font-family: "Montserrat", Arial, Helvetica, sans-serif;
-  font-weight: 600;
-} */
-
 header {
   display: flex;
   flex-direction: column;
@@ -36,6 +27,7 @@ nav > a {
 
 canvas {
   border-radius: 20px;
+  box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.22);
 }
 
 .content {
