@@ -1,3 +1,3 @@
 import "./webgl";
 import "./style.css";
-import '@fontsource-variable/eb-garamond';
+import '@fontsource/instrument-serif';

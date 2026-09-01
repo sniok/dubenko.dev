@@ -716,9 +716,9 @@ function hmrAccept(bundle /*: ParcelRequire */ , id /*: string */ ) {
 },{}],"fILKw":[function(require,module,exports,__globalThis) {
 var _webgl = require("./webgl");
 var _styleCss = require("./style.css");
-var _ebGaramond = require("@fontsource-variable/eb-garamond");
+var _instrumentSerif = require("@fontsource/instrument-serif");
 
-},{"./webgl":"aVzHl","./style.css":"bhJkM","@fontsource-variable/eb-garamond":"drX3e"}],"aVzHl":[function(require,module,exports,__globalThis) {
+},{"./webgl":"aVzHl","./style.css":"bhJkM","@fontsource/instrument-serif":"fFthy"}],"aVzHl":[function(require,module,exports,__globalThis) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 var _redWavesGlsl = require("./redWaves.glsl");
 var _redWavesGlslDefault = parcelHelpers.interopDefault(_redWavesGlsl);
@@ -728,16 +728,18 @@ var _funkyGlsl = require("./funky.glsl");
 var _funkyGlslDefault = parcelHelpers.interopDefault(_funkyGlsl);
 var _bluewavesGlsl = require("./bluewaves.glsl");
 var _bluewavesGlslDefault = parcelHelpers.interopDefault(_bluewavesGlsl);
+var _circlesGlsl = require("./circles.glsl");
+var _circlesGlslDefault = parcelHelpers.interopDefault(_circlesGlsl);
 // List of all the fragment shaders
 const shaders = [
     (0, _funkyGlslDefault.default),
     (0, _redWavesGlslDefault.default),
     (0, _wavesGlslDefault.default),
-    (0, _bluewavesGlslDefault.default)
+    (0, _bluewavesGlslDefault.default),
+    (0, _circlesGlslDefault.default)
 ];
 // Pick a random shader
 let shaderIndex = Math.floor(Math.random() * shaders.length);
-shaderIndex = 3;
 // Just a fullscreen square
 const vertices = new Float32Array([
     -1,
@@ -753,16 +755,6 @@ const vertices = new Float32Array([
     1,
     1
 ]);
-// Setup canvas
-const canvasSize = 256;
-const canvas = document.getElementById("canvas");
-const gl = canvas.getContext("webgl");
-canvas.width = canvasSize;
-canvas.height = canvasSize;
-// Reset view
-gl.viewport(0, 0, canvas.width, canvas.height);
-gl.clearColor(0, 0, 0, 1);
-gl.clear(gl.COLOR_BUFFER_BIT);
 // Simple vertex shader for the 2d square that will be fullscreen
 const vertex = `
 attribute vec2 aVertexPosition;
@@ -771,10 +763,24 @@ void main() {
 gl_Position = vec4(aVertexPosition, 0.0, 1.0);
 }
 `;
-function createProgram(fragmentShader) {
+// Setup canvas
+const canvasSize = 256;
+const canvas1 = document.getElementById("canvas1");
+const gl1 = canvas1.getContext("webgl");
+canvas1.width = canvasSize;
+canvas1.height = canvasSize;
+// Canvas 2
+const canvas2 = document.getElementById("canvas2");
+const gl2 = canvas2.getContext("webgl");
+canvas2.width = canvasSize;
+canvas2.height = canvasSize;
+function createProgram(gl, fragmentShader) {
+    // Reset view
+    gl.viewport(0, 0, canvasSize, canvasSize);
+    gl.clearColor(0, 0, 0, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT);
     // Vertex shader stuff
     const vs = gl.createShader(gl.VERTEX_SHADER);
-    const fragment = shaders[shaderIndex];
     gl.shaderSource(vs, vertex);
     gl.compileShader(vs);
     // Fragment shader stuff
@@ -805,22 +811,46 @@ function createProgram(fragmentShader) {
     program.aVertexPosition = gl.getAttribLocation(program, "aVertexPosition");
     gl.enableVertexAttribArray(program.aVertexPosition);
     gl.vertexAttribPointer(program.aVertexPosition, 2, gl.FLOAT, false, 0, 0);
-    return program;
+    return (timestamp)=>{
+        // Load the programm
+        gl.useProgram(program);
+        gl.uniform1f(program.uTime, timestamp / 80);
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
+    };
 }
-let program = createProgram(shaders[shaderIndex]);
+const state = {
+    gl: gl1,
+    render: createProgram(gl1, shaders[shaderIndex])
+};
 const loop = (timestamp)=>{
-    gl.uniform1f(program.uTime, timestamp / 80);
-    gl.drawArrays(gl.TRIANGLES, 0, 6);
+    state.render(timestamp);
     requestAnimationFrame(loop);
 };
 loop();
-canvas.onclick = ()=>{
+const onClick = ()=>{
     shaderIndex = (shaderIndex + 1) % shaders.length;
-    program = createProgram(shaders[shaderIndex]);
+    const newGl = state.gl === gl1 ? gl2 : gl1;
+    const currentCanvas = state.gl === gl1 ? canvas1 : canvas2;
+    const newCanvas = state.gl === gl1 ? canvas2 : canvas1;
+    createProgram(newGl, shaders[shaderIndex]);
+    state.render = createProgram(newGl, shaders[shaderIndex]);
+    state.gl = newGl;
+    newCanvas.style.transform = `translateX(128px)`;
+    currentCanvas.style.transform = `translateX(-128px)`;
+    setTimeout(()=>{
+        currentCanvas.style.boxShadow = 'none';
+        currentCanvas.style.zIndex = 0;
+        currentCanvas.style.transform = `translateX(0px)`;
+        newCanvas.style.transform = `translateX(0px)`;
+        newCanvas.style.zIndex = 1;
+        newCanvas.style.boxShadow = null;
+    }, 200);
 };
+const stage = document.getElementById("stage");
+stage.onclick = onClick;
 
-},{"./redWaves.glsl":"kSVhk","./waves.glsl":"95Dwv","./funky.glsl":"bagFm","./bluewaves.glsl":"5pTSj","@parcel/transformer-js/src/esmodule-helpers.js":"brd5t"}],"kSVhk":[function(require,module,exports,__globalThis) {
-module.exports = "precision highp float;\n#define GLSLIFY 1\n\nuniform float uTime;\nuniform float uSize;\n\nvoid main() {\n  float x = gl_FragCoord.x;\n  float y = gl_FragCoord.y;\n  float nx = x / uSize + 0.5;\n  float ny = y / uSize + 0.5;\n\n  // float time = uTime;\n  float st = uTime / 5.0;\n\n//\n  float c = sin(((ny * ny - sin(st * 0.1)) * (nx / ny - 0.3 * cos(st * 0.05)) * 2.95 + st * 0.2) * 80.0);\n\n  gl_FragColor = vec4(c * 0.5, 0.0, c * (1.0 + sin(st)) * 0.2, 1.0);\n}\n";
+},{"./redWaves.glsl":"kSVhk","./waves.glsl":"95Dwv","./funky.glsl":"bagFm","./bluewaves.glsl":"5pTSj","@parcel/transformer-js/src/esmodule-helpers.js":"brd5t","./circles.glsl":"k1kLB"}],"kSVhk":[function(require,module,exports,__globalThis) {
+module.exports = "precision highp float;\n#define GLSLIFY 1\n\nuniform float uTime;\nuniform float uSize;\n\nvoid main() {\n  float x = gl_FragCoord.x;\n  float y = gl_FragCoord.y;\n  float nx = x / uSize + 0.5;\n  float ny = y / uSize + 0.5;\n\n  // float time = uTime;\n  float st = uTime / 5.0;\n\n  float c = sin(((ny * ny - sin(st * 0.1)) * (nx / ny - 0.2 * cos(st * 0.05)) * 0.85 + st * 0.2) * 30.0);\n\n  gl_FragColor = vec4(c * 0.5, 0.0, c * (1.0 + sin(st)) * 0.2, 1.0);\n}\n";
 
 },{}],"95Dwv":[function(require,module,exports,__globalThis) {
 module.exports = "precision highp float;\n#define GLSLIFY 1\n\nuniform float uTime;\n\nvoid main() {\n  float x = gl_FragCoord.x;\n  float y = gl_FragCoord.y;\n  float time = uTime;\n  float tek = mod((y / 2.0 + sin((x) / 6.0)) + cos(y / 20.0) * 3.0 + cos(x / 20.0 + time / 20.0) * 1.4 - time / 2.0, 35.0) / 15.0;\n  gl_FragColor = vec4(tek * 0.4, 0.1, 2.0 - tek * 0.5, 1.0);\n}\n";
@@ -829,7 +859,7 @@ module.exports = "precision highp float;\n#define GLSLIFY 1\n\nuniform float uTi
 module.exports = "precision highp float;\n#define GLSLIFY 1\n\nuniform float uTime;\nuniform float uSize;\n\nvoid main() {\n  vec2 pos = gl_FragCoord.xy / uSize;\n  float x = pos.x;\n  float y = pos.y;\n  float t = uTime / 15.0;\n\n  float faq = uSize / 3.5;\n\n  float circles1 = sin(sin(t + 0.0) * 1.0 + x * faq) + cos(cos(t + 0.0) * 1.0 + y * faq);\n  float circles2 = sin(sin(t + 3.1) * 4.0 + x * faq) + cos(cos(t + 3.14) * 4.0 + y * faq);\n  float circles3 = sin(sin(t + 0.0) * 4.0 + x * faq) + cos(cos(t + 0.0) * 4.0 + y * faq);\n\n  gl_FragColor = vec4(circles1, circles2, circles3, 1.0);\n}\n";
 
 },{}],"5pTSj":[function(require,module,exports,__globalThis) {
-module.exports = "precision highp float;\n#define GLSLIFY 1\n\nuniform float uTime;\n\nvoid main() {\n  float x = gl_FragCoord.x;\n  float y = gl_FragCoord.y;\n  float time = -uTime;\n  float tek = mod((y / 2.0 + sin((x) / 6.0)) + cos(y / 20.0) * 3.0 + cos(x / 20.0 + time / 20.0) * 1.4 - time / 2.0, 35.0) / 15.0;\n\n  // base blue color\n  vec3 blue = vec3(0.5, 0.7, 0.9);\n  vec3 white = vec3(1.0, 1.0, 1.0);\n  vec3 yellow = vec3(1.0, 0.8, 0.5);\n  \n  float bgMask = clamp((sin(x/30.0) + cos(0.7 + y / 70.0) * 12.0 + 1.0) / .8, 0.0, 1.0);\n  float bgMask2 = clamp((sin(x/30.0) + cos(0.65 + y / 70.0) * 3.0 + 1.0) / .8, 0.0, 1.0);\n  vec3 beach = (yellow * bgMask) + (blue * (1.0 - bgMask));\n\n  // float bigWave = 1.0 - min(1.0, mod((y / 2.0 + sin((x) / 6.0)) + cos(y / 10.0) * 3.0 + cos(x / 20.0 + time / 20.0) * 1.4 - time / 1.0, 35.0) / 15.0);\n  float bigWave = sin(y / 14.0);\n\n  float blop = 1.0 - min(1.0, mod((y / 2.0 + sin(x / 5.0)) + cos(y / 20.0) * 3.0 + cos(x / 20.0 + time / 20.0) * 1.4 - time / 2.0 - 2.0, 35.0) / 5.0);\n \n  gl_FragColor = vec4(white * bigWave * (1.0 - bgMask2) * 0.5 + white * blop * (1.0 - bgMask2) * 0.0 + beach * 0.0, 1.0);\n\n  // gl_FragColor = vec4(white * blop, 1.0);\n\n}\n";
+module.exports = "precision highp float;\n#define GLSLIFY 1\n\nuniform float uTime;\nuniform float uSize;\n\nvoid main() {\n\n  float x = gl_FragCoord.x;\n  float y = gl_FragCoord.y;\n\n  float nx = x / uSize;\n  float ny = y / uSize;\n\n  float time = -uTime;\n  float tek = mod((y / 2.0 + sin((x) / 6.0)) + cos(y / 20.0) * 3.0 + cos(x / 20.0 + time / 20.0) * 1.4 - time / 2.0, 35.0) / 15.0;\n\n  // base blue color\n  vec3 blue = vec3(0.5, 0.7, 0.9);\n  vec3 white = vec3(1.0, 1.0, 1.0);\n  vec3 yellow = vec3(1.0, 0.8, 0.5);\n  \n  float bgMask = clamp((sin(x/30.0) + cos(0.7 + y / 70.0) * 12.0 + 1.0) / .8, 0.0, 1.0);\n  float bgMask2 = clamp((sin(x/30.0) * 0.8 + cos(0.8 + y / 75.0) * 12.0 + 0.2) / .8, 0.0, 1.0);\n  vec3 beach = ((1.0 + sin(ny * 8.3 * nx * 2.2) / 5.0) * yellow * bgMask) + (blue * (1.0 - bgMask));\n\n  float bigWave = 1.0 - min(1.0, mod((y / 2.0 + sin((x) / 8.0)) + cos(y / 13.0) * (1.0 - ny) * 5.0 + cos(x / 20.0 + time / 20.0) * 1.4 - time / 1.0, 42.0) / 30.0);\n\n  gl_FragColor = vec4(white * bigWave * (1.0 - bgMask2) * 0.6 + beach * 0.9, 1.0);\n\n  // gl_FragColor = vec4(white * bigWave, 1.0);\n\n}\n";
 
 },{}],"brd5t":[function(require,module,exports,__globalThis) {
 exports.interopDefault = function(a) {
@@ -861,6 +891,9 @@ exports.export = function(dest, destName, get) {
     });
 };
 
-},{}],"bhJkM":[function() {},{}],"drX3e":[function() {},{}]},["9bwby","fILKw"], "fILKw", "parcelRequiree981", {})
+},{}],"k1kLB":[function(require,module,exports,__globalThis) {
+module.exports = "precision highp float;\n#define GLSLIFY 1\n\nuniform float uTime;\nuniform float uSize;\n\nvoid main() {\n  vec2 pos = gl_FragCoord.xy / uSize;\n  \n  float t = uTime / 5.0;\n\n  float circleCount = 7.0;\n  float radius = 0.4;\n\n  vec2 uv = fract(pos * circleCount);\n\n  float speed = 0.2 + pos.x / 3.0;\n  float dist = length(uv - vec2(0.5, 0.5) + vec2(sin(t*speed), cos(t*speed)) * 0.3);\n  float color = smoothstep(radius + 0.01, radius - 0.01, dist);\n\n  float speed2 = 0.6 + pos.y / 2.2;\n  float dist2 = length(uv - vec2(0.5, 0.5) + vec2(sin(t*speed2), cos(t*speed2)) * 0.3);\n  float green = smoothstep(radius + 0.01, radius - 0.01, dist2);\n\n  float speed3 = 1.0 + pos.x / 2.5;\n  float dist3 = length(uv - vec2(0.5, 0.5) + vec2(sin(t*speed3), cos(t*speed3)) * 0.3);\n  float blue = smoothstep(radius + 0.01, radius - 0.01, dist3);\n\n  gl_FragColor = vec4(0.2 + color, 0.1+ green, 0.4+blue, 1.0);\n}\n";
+
+},{}],"bhJkM":[function() {},{}],"fFthy":[function() {},{}]},["9bwby","fILKw"], "fILKw", "parcelRequiree981", {})
 
 //# sourceMappingURL=dubenko.dev.4144375d.js.map

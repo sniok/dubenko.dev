@@ -3,8 +3,17 @@
 }
 
 body {
-  font-family: "EB Garamond Variable", serif;
+  font-family: 'Instrument Serif', serif;
   margin: 0;
+  color:  #111111;
+  background:  #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: #0e0e10;
+    color: #ffffff;
+  }
 }
 
 header {
@@ -26,13 +35,28 @@ nav > a {
 }
 
 canvas {
+  top: 0;
+  cursor: pointer;
+  position: absolute;
   border-radius: 20px;
   box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.22);
+  transform: translateX(0px);
+  transition: transform;
+  transition-duration: 0.2s;
 }
 
-.content {
-  margin: 2em auto;
-  max-width: 600px;
+#stage { 
+  background: none;
+  color: inherit;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  cursor: pointer;
+  text-align: start;
+  width: 256px;
+  height: 256px;
+  position: relative;
 }
 
 .square {
@@ -50,17 +74,20 @@ canvas {
   align-items: center;
   flex-direction: column;
   text-transform: capitalize;
-  color: #111;
   margin-bottom: 28px;
 }
 
 .title {
   font-size: 38px;
+  font-weight: normal;
+  margin: 0;
 }
 
 .subtitle {
   margin-top: 8px;
   font-size: 20px;
+   font-weight: normal;
+   margin: 0;
 }
 
 .links {
@@ -69,8 +96,7 @@ canvas {
 }
 
 .links a {
-  color: #333;
-  text-decoration: none;
+  color: inherit;
   margin: 0 10px;
 }
 

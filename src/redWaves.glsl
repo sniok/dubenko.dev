@@ -12,8 +12,7 @@ void main() {
   // float time = uTime;
   float st = uTime / 5.0;
 
-//
-  float c = sin(((ny * ny - sin(st * 0.1)) * (nx / ny - 0.3 * cos(st * 0.05)) * 2.95 + st * 0.2) * 80.0);
+  float c = sin(((ny * ny - sin(st * 0.1)) * (nx / ny - 0.2 * cos(st * 0.05)) * 0.85 + st * 0.2) * 30.0);
 
   gl_FragColor = vec4(c * 0.5, 0.0, c * (1.0 + sin(st)) * 0.2, 1.0);
 }

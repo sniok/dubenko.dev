@@ -2,28 +2,16 @@ import redWaves from "./redWaves.glsl";
 import waves from "./waves.glsl";
 import funky from "./funky.glsl";
 import bluewaves from "./bluewaves.glsl";
+import circles from "./circles.glsl";
 
 // List of all the fragment shaders
-const shaders = [funky, redWaves, waves, bluewaves];
+const shaders = [funky, redWaves, waves, bluewaves, circles];
 
 // Pick a random shader
 let shaderIndex = Math.floor(Math.random() * shaders.length);
-shaderIndex = 3;
 
 // Just a fullscreen square
 const vertices = new Float32Array([-1, -1, 1, 1, -1, 1, -1, -1, 1, -1, 1, 1]);
-
-// Setup canvas
-const canvasSize = 256;
-const canvas = document.getElementById("canvas");
-const gl = canvas.getContext("webgl");
-canvas.width = canvasSize;
-canvas.height = canvasSize;
-
-// Reset view
-gl.viewport(0, 0, canvas.width, canvas.height);
-gl.clearColor(0, 0, 0, 1);
-gl.clear(gl.COLOR_BUFFER_BIT);
 
 // Simple vertex shader for the 2d square that will be fullscreen
 const vertex = `
@@ -34,10 +22,27 @@ gl_Position = vec4(aVertexPosition, 0.0, 1.0);
 }
 `;
 
-function createProgram(fragmentShader) {
+// Setup canvas
+const canvasSize = 256;
+const canvas1 = document.getElementById("canvas1");
+const gl1 = canvas1.getContext("webgl");
+canvas1.width = canvasSize;
+canvas1.height = canvasSize;
+
+// Canvas 2
+const canvas2 = document.getElementById("canvas2");
+const gl2 = canvas2.getContext("webgl");
+canvas2.width = canvasSize;
+canvas2.height = canvasSize;
+
+function createProgram(gl, fragmentShader) {
+  // Reset view
+  gl.viewport(0, 0, canvasSize, canvasSize);
+  gl.clearColor(0, 0, 0, 1);
+  gl.clear(gl.COLOR_BUFFER_BIT);
+
   // Vertex shader stuff
   const vs = gl.createShader(gl.VERTEX_SHADER);
-  const fragment = shaders[shaderIndex];
   gl.shaderSource(vs, vertex);
   gl.compileShader(vs);
 
@@ -80,19 +85,47 @@ function createProgram(fragmentShader) {
   gl.enableVertexAttribArray(program.aVertexPosition);
   gl.vertexAttribPointer(program.aVertexPosition, 2, gl.FLOAT, false, 0, 0);
 
-  return program;
+  return (timestamp) => {
+    // Load the programm
+    gl.useProgram(program);
+    gl.uniform1f(program.uTime, timestamp / 80);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+  }
 }
 
-let program = createProgram(shaders[shaderIndex]);
+const state = {
+  gl: gl1,
+  render: createProgram(gl1, shaders[shaderIndex]),
+}
 
 const loop = (timestamp) => {
-  gl.uniform1f(program.uTime, timestamp / 80);
-  gl.drawArrays(gl.TRIANGLES, 0, 6);
+  state.render(timestamp);
   requestAnimationFrame(loop);
 };
 loop();
 
-canvas.onclick = () => {
+const onClick = () => {
   shaderIndex = (shaderIndex + 1) % shaders.length;
-  program = createProgram(shaders[shaderIndex]);
+  const newGl = state.gl === gl1 ? gl2 : gl1;
+  const currentCanvas = state.gl === gl1 ? canvas1 : canvas2;
+  const newCanvas = state.gl === gl1 ? canvas2 : canvas1;
+  createProgram(newGl, shaders[shaderIndex])
+  state.render = createProgram(newGl, shaders[shaderIndex]);
+  state.gl = newGl;
+
+  newCanvas.style.transform = `translateX(128px)`;
+  currentCanvas.style.transform = `translateX(-128px)`;
+
+  setTimeout(() => {
+    currentCanvas.style.boxShadow = 'none';
+    currentCanvas.style.zIndex = 0;
+    currentCanvas.style.transform = `translateX(0px)`;
+    newCanvas.style.transform = `translateX(0px)`;
+    newCanvas.style.zIndex = 1
+    newCanvas.style.boxShadow = null;
+
+  }, 200)
 };
+
+const stage = document.getElementById("stage");
+stage.onclick = onClick;

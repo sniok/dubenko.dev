@@ -5,9 +5,9 @@
   "author": "Oleksandr Dubenko <dubenko.oleksandr@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "@fontsource-variable/eb-garamond": "^5.3.0",
-    "parcel": "^2.16.4",
-    "@parcel/transformer-glsl": "^2.16.4"
+    "@fontsource/instrument-serif": "^5.3.0",
+    "@parcel/transformer-glsl": "^2.16.4",
+    "parcel": "^2.16.4"
   },
   "scripts": {
     "start": "parcel --dist-dir docs/ src/index.html",
